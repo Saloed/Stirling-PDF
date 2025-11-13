@@ -612,6 +612,7 @@ public class ApplicationProperties {
                 private Audit audit = new Audit();
                 private long maxPromptCharacters = 4000;
                 private double minConfidenceNano = 0.65;
+                private Usage usage = new Usage();
 
                 @Data
                 public static class Cache {
@@ -626,6 +627,8 @@ public class ApplicationProperties {
                     private String primary = "gpt-5-nano";
                     private String fallback = "gpt-5-mini";
                     private String embedding = "text-embedding-3-small";
+                    private double temperature = 0.2;
+                    private double topP = 0.95;
                     private long connectTimeoutMillis = 10000;
                     private long readTimeoutMillis = 60000;
                 }
@@ -645,6 +648,12 @@ public class ApplicationProperties {
                 @Data
                 public static class Audit {
                     private boolean enabled = true;
+                }
+
+                @Data
+                public static class Usage {
+                    private long perUserMonthlyTokens = 200000;
+                    private double warnAtRatio = 0.7;
                 }
             }
         }

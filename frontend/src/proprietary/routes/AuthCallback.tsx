@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@app/auth/UseSession';
 
 /**
  * OAuth Callback Handler
@@ -11,7 +10,6 @@ import { useAuth } from '@app/auth/UseSession';
  */
 export default function AuthCallback() {
   const navigate = useNavigate();
-  const { refreshSession } = useAuth();
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -32,17 +30,31 @@ export default function AuthCallback() {
           return;
         }
 
-        // Store JWT in localStorage
+        // Store JWT in localStorage - CRITICAL for persistence
         localStorage.setItem('stirling_jwt', token);
-        console.log('[AuthCallback] JWT stored in localStorage');
+        console.log('[AuthCallback] JWT stored in localStorage after OAuth');
+        console.log('[AuthCallback] JWT token length:', token.length);
+
+        // Verify it was actually saved
+        const savedToken = localStorage.getItem('stirling_jwt');
+        if (!savedToken) {
+          console.error('[AuthCallback] CRITICAL: JWT was not saved to localStorage!');
+          // Try again
+          localStorage.setItem('stirling_jwt', token);
+        } else if (savedToken !== token) {
+          console.error('[AuthCallback] CRITICAL: Saved token differs from received token!');
+        } else {
+          console.log('[AuthCallback] ✓ Verified JWT is correctly saved in localStorage');
+        }
 
         // Dispatch custom event for other components to react to JWT availability
-        window.dispatchEvent(new CustomEvent('jwt-available'))
+        // This will trigger the auth provider to load the session with the new JWT
+        window.dispatchEvent(new CustomEvent('jwt-available'));
 
-        // Refresh session to load user info into state
-        await refreshSession();
+        // Small delay to ensure event is processed
+        await new Promise(resolve => setTimeout(resolve, 100));
 
-        console.log('[AuthCallback] Session refreshed, redirecting to home');
+        console.log('[AuthCallback] JWT saved, redirecting to home');
 
         // Clear the hash from URL and redirect to home page
         navigate('/', { replace: true });
@@ -56,7 +68,7 @@ export default function AuthCallback() {
     };
 
     handleCallback();
-  }, [navigate, refreshSession]);
+  }, [navigate]);
 
   return (
     <div style={{

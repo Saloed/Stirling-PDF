@@ -50,12 +50,19 @@ public class CustomOAuth2AuthenticationSuccessHandler
     private final ApplicationProperties.Security.OAUTH2 oauth2Properties;
     private final UserService userService;
     private final JwtServiceInterface jwtService;
+    private final ApplicationProperties applicationProperties;
 
     @Override
     @Audited(type = AuditEventType.USER_LOGIN, level = AuditLevel.BASIC)
     public void onAuthenticationSuccess(
             HttpServletRequest request, HttpServletResponse response, Authentication authentication)
             throws ServletException, IOException {
+
+        System.out.println("[OAuth Success Handler] Starting authentication success handling");
+        System.out.println("[OAuth Success Handler] Request URL: " + request.getRequestURL());
+        System.out.println(
+                "[OAuth Success Handler] Frontend URL from config: "
+                        + applicationProperties.getSystem().getFrontendUrl());
 
         Object principal = authentication.getPrincipal();
         String username = "";
@@ -127,10 +134,16 @@ public class CustomOAuth2AuthenticationSuccessHandler
                             jwtService.generateToken(
                                     authentication, Map.of("authType", AuthenticationType.OAUTH2));
 
+                    System.out.println(
+                            "[OAuth Success Handler] JWT generated: "
+                                    + (jwt != null ? "YES (length: " + jwt.length() + ")" : "NO"));
+
                     // Build context-aware redirect URL based on the original request
                     String redirectUrl =
                             buildContextAwareRedirectUrl(request, response, contextPath, jwt);
 
+                    System.out.println(
+                            "[OAuth Success Handler] Final redirect URL: " + redirectUrl);
                     response.sendRedirect(redirectUrl);
                 } else {
                     // v1: redirect directly to home
@@ -170,14 +183,44 @@ public class CustomOAuth2AuthenticationSuccessHandler
             String contextPath,
             String jwt) {
         String redirectPath = resolveRedirectPath(request, contextPath);
-        String origin =
-                resolveForwardedOrigin(request)
-                        .orElseGet(
-                                () ->
-                                        resolveOriginFromReferer(request)
-                                                .orElseGet(() -> buildOriginFromRequest(request)));
+
+        System.out.println("[OAuth Success Handler] Resolving origin...");
+        Optional<String> configuredOrigin = resolveConfiguredFrontendOrigin();
+        System.out.println(
+                "[OAuth Success Handler] Configured frontend origin: "
+                        + configuredOrigin.orElse("NOT SET"));
+
+        String origin;
+        if (configuredOrigin.isPresent()) {
+            origin = configuredOrigin.get();
+            System.out.println("[OAuth Success Handler] Using configured origin: " + origin);
+        } else {
+            System.out.println(
+                    "[OAuth Success Handler] No configured origin, trying other methods...");
+            origin =
+                    resolveForwardedOrigin(request)
+                            .orElseGet(
+                                    () -> {
+                                        System.out.println(
+                                                "[OAuth Success Handler] No forwarded origin, trying referer...");
+                                        return resolveOriginFromReferer(request)
+                                                .orElseGet(
+                                                        () -> {
+                                                            System.out.println(
+                                                                    "[OAuth Success Handler] No referer, building from request...");
+                                                            return buildOriginFromRequest(request);
+                                                        });
+                                    });
+            System.out.println("[OAuth Success Handler] Resolved origin: " + origin);
+        }
+
         clearRedirectCookie(response);
-        return origin + redirectPath + "#access_token=" + jwt;
+        String finalUrl = origin + redirectPath + "#access_token=" + jwt;
+        System.out.println("[OAuth Success Handler] Building redirect URL:");
+        System.out.println("  - Origin: " + origin);
+        System.out.println("  - Redirect path: " + redirectPath);
+        System.out.println("  - Final URL: " + finalUrl);
+        return finalUrl;
     }
 
     private String resolveRedirectPath(HttpServletRequest request, String contextPath) {
@@ -276,6 +319,26 @@ public class CustomOAuth2AuthenticationSuccessHandler
         }
 
         return origin.toString();
+    }
+
+    private Optional<String> resolveConfiguredFrontendOrigin() {
+        System.out.println("[OAuth Success Handler] Checking configured frontend URL...");
+        if (applicationProperties.getSystem() == null) {
+            System.out.println("[OAuth Success Handler] applicationProperties.getSystem() is NULL");
+            return Optional.empty();
+        }
+        String configured = applicationProperties.getSystem().getFrontendUrl();
+        System.out.println("[OAuth Success Handler] Frontend URL from config: " + configured);
+        if (configured == null || configured.isBlank()) {
+            System.out.println("[OAuth Success Handler] Frontend URL is null or blank");
+            return Optional.empty();
+        }
+        String trimmed = configured.trim();
+        if (trimmed.endsWith("/")) {
+            trimmed = trimmed.substring(0, trimmed.length() - 1);
+        }
+        System.out.println("[OAuth Success Handler] Returning configured frontend URL: " + trimmed);
+        return Optional.of(trimmed);
     }
 
     private boolean isDefaultPort(String scheme, String port) {

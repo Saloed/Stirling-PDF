@@ -11,7 +11,6 @@ import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -225,9 +224,19 @@ public class SecurityConfiguration {
                                 csrf.ignoringRequestMatchers(
                                                 request -> {
                                                     String uri = request.getRequestURI();
+                                                    String contextPath = request.getContextPath();
+                                                    String trimmedUri =
+                                                            uri.startsWith(contextPath)
+                                                                    ? uri.substring(
+                                                                            contextPath.length())
+                                                                    : uri;
 
-                                                    // Ignore CSRF for auth endpoints
-                                                    if (uri.startsWith("/api/v1/auth/")) {
+                                                    // Ignore CSRF for auth endpoints + oauth/saml
+                                                    if (trimmedUri.startsWith("/api/v1/auth/")
+                                                            || trimmedUri.startsWith("/oauth2")
+                                                            || trimmedUri.startsWith("/saml2")
+                                                            || trimmedUri.startsWith(
+                                                                    "/login/oauth2/code/")) {
                                                         return true;
                                                     }
 
@@ -363,7 +372,8 @@ public class SecurityConfiguration {
                                                     loginAttemptService,
                                                     securityProperties.getOauth2(),
                                                     userService,
-                                                    jwtService))
+                                                    jwtService,
+                                                    applicationProperties))
                                     .failureHandler(new CustomOAuth2AuthenticationFailureHandler())
                                     // Add existing Authorities from the database
                                     .userInfoEndpoint(

@@ -87,6 +87,34 @@ export const AppConfigProvider: React.FC<AppConfigProviderProps> = ({
   const initialDelay = retryOptions?.initialDelay ?? 1000;
 
   const fetchConfig = useCallback(async (force = false) => {
+    // First check if user has a JWT token - if not, they're not authenticated
+    const hasJWT = localStorage.getItem('stirling_jwt');
+
+    // Check if on auth page
+    // Need to check for paths with or without base path
+    const pathname = window.location.pathname;
+    const isAuthPage = pathname.endsWith('/login') ||
+                      pathname.endsWith('/signup') ||
+                      pathname.endsWith('/auth/callback') ||
+                      pathname.includes('/auth/') ||
+                      pathname.includes('/invite/');
+
+    // Skip config fetch if:
+    // 1. On auth page, OR
+    // 2. No JWT token (not authenticated) and not forcing
+    if (isAuthPage || (!hasJWT && !force)) {
+      console.debug('[AppConfig] Skipping config fetch:', {
+        reason: isAuthPage ? 'On auth page' : 'No JWT token',
+        pathname,
+        hasJWT: !!hasJWT,
+        force
+      });
+      setLoading(false);
+      setConfig({ enableLogin: true });
+      setHasResolvedConfig(true);
+      return;
+    }
+
     // Prevent duplicate fetches unless forced
     if (!force && fetchCount > 0) {
       console.debug('[AppConfig] Already fetched, skipping');
@@ -107,6 +135,16 @@ export const AppConfigProvider: React.FC<AppConfigProviderProps> = ({
           await sleep(delay);
         } else {
           console.log('[AppConfig] Fetching app config...');
+        }
+
+        // GUARD: Only make the API call if user has JWT token
+        const currentJWT = localStorage.getItem('stirling_jwt');
+        if (!currentJWT && !force) {
+          console.debug('[AppConfig] No JWT token, skipping API call entirely');
+          setConfig({ enableLogin: true });
+          setHasResolvedConfig(true);
+          setLoading(false);
+          return;
         }
 
         // apiClient automatically adds JWT header if available via interceptors
@@ -155,12 +193,31 @@ export const AppConfigProvider: React.FC<AppConfigProviderProps> = ({
   }, [fetchCount, hasResolvedConfig, isBlockingMode, maxRetries, initialDelay]);
 
   useEffect(() => {
+    // Skip fetching config on login and auth callback pages
+    // Need to check for paths with or without base path
+    const pathname = window.location.pathname;
+    const isAuthPage = pathname.endsWith('/login') ||
+                      pathname.endsWith('/signup') ||
+                      pathname.endsWith('/auth/callback') ||
+                      pathname.includes('/auth/') ||
+                      pathname.includes('/invite/');
+
+    if (isAuthPage) {
+      console.debug('[AppConfig] On auth page, skipping config fetch in useEffect');
+      console.debug('[AppConfig] Current pathname:', pathname);
+      setLoading(false);
+      // Set minimal config for auth pages
+      setConfig({ enableLogin: true });
+      setHasResolvedConfig(true);
+      return;
+    }
+
     // Always try to fetch config to check if login is disabled
     // The endpoint should be public and return proper JSON
     if (autoFetch) {
       fetchConfig();
     }
-  }, [autoFetch, fetchConfig]);
+  }, [autoFetch]); // Remove fetchConfig from deps to prevent re-runs
 
   // Listen for JWT availability (triggered on login/signup)
   useEffect(() => {
