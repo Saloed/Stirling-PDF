@@ -7,14 +7,10 @@ import LocalIcon from '@app/components/shared/LocalIcon';
 import { Tooltip } from '@app/components/shared/Tooltip';
 import { SearchInterface } from '@app/components/viewer/SearchInterface';
 import ViewerAnnotationControls from '@app/components/shared/rightRail/ViewerAnnotationControls';
-import { useFileState } from '@app/contexts/FileContext';
 
 export function useViewerRightRailButtons() {
   const { t } = useTranslation();
   const viewer = useViewer();
-  const { selectors } = useFileState();
-  const filesSignature = selectors.getFilesSignature();
-  const files = useMemo(() => selectors.getFiles(), [selectors, filesSignature]);
   const [isPanning, setIsPanning] = useState<boolean>(() => viewer.getPanState()?.isPanning ?? false);
 
   // Lift i18n labels out of memo for clarity

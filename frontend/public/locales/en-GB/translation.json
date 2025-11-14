@@ -5145,8 +5145,7 @@
     "title": "Stirling PDF Bot",
     "alphaBadge": "Alpha",
     "alphaTitle": "Experimental feature",
-    "alphaDescription": "This Chatbot feature is in currently in alpha and is subject to change. Image-based content is not supported yet. Responses may be imperfect, so double-check important answers.",
-    "acceptAlphaLabel": "I understand this feature is experimental and image content is not supported yet.",
+    "alphaDescription": "Chatbot is in currently in alpha and is subject to change. Responses may be imperfect, please check responses.",
     "fileLabel": "Document to query",
     "filePlaceholder": "Select an uploaded PDF",
     "noFiles": "Upload a PDF from File Manager to start chatting.",
@@ -5193,6 +5192,14 @@
     "noTextTitle": "No text detected in this PDF",
     "noTextBody": "We could not find selectable text in this document. Would you like to run OCR to convert scanned pages into text?",
     "noTextDismiss": "Maybe later",
-    "noTextRunOcr": "Run OCR and retry"
+    "noTextRunOcr": "Run OCR and retry",
+    "usage": {
+      "limitReachedTitle": "Chatbot limit reached",
+      "limitReachedBody": "You have exceeded the current monthly allocation for the chatbot. Further responses may be throttled.",
+      "nearingLimitTitle": "Approaching usage limit",
+      "nearingLimitBody": "You are nearing your monthly chatbot allocation. Consider limiting very large requests."
+    },
+    "autoSyncInfo": "Selected documents are synced automatically when the chatbot opens.",
+    "autoSyncPrompt": "Acknowledge the alpha notice to start syncing automatically."
   }
 }
