@@ -1,0 +1,20 @@
+name: Scan project with Seqra
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  seqra:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout your repository
+        uses: actions/checkout@v4
+
+      - name: Run Seqra code analysis
+        uses: seqra/seqra-action@v1.4.1
+        with:
+          upload-sarif: 'true'
+          artifact-name: 'seqra.sarif'
