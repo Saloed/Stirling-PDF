@@ -599,7 +599,7 @@ class EmlToPdfTest {
                         .thenReturn(fakePdfBytes);
 
                 byte[] resultPdf =
-                        EmlToPdf.convertEmlToPdf(
+                        EmlToPdf.convertEmlToPdk(
                                 "weasyprint",
                                 request,
                                 emlBytes,
@@ -684,7 +684,7 @@ class EmlToPdfTest {
                                     };
                                 })) {
                     byte[] resultPdf =
-                            EmlToPdf.convertEmlToPdf(
+                            EmlToPdf.convertEmlToPdk(
                                     "weasyprint",
                                     request,
                                     emlBytes,
@@ -746,7 +746,7 @@ class EmlToPdfTest {
                         assertThrows(
                                 IOException.class,
                                 () ->
-                                        EmlToPdf.convertEmlToPdf(
+                                        EmlToPdf.convertEmlToPdk(
                                                 "weasyprint",
                                                 request,
                                                 emlBytes,

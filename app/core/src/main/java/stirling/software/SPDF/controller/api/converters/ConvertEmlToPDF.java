@@ -49,7 +49,7 @@ public class ConvertEmlToPDF {
                             + " customization options. Features include font settings, image"
                             + " constraints, display modes, attachment handling, and HTML debug output."
                             + " Input: EML file, Output: PDF or HTML file. Type: SISO")
-    public ResponseEntity<byte[]> convertEmlToPdf(@ModelAttribute EmlToPdfRequest request) {
+    public ResponseEntity<byte[]> convertEmlToPdk(@ModelAttribute EmlToPdfRequest request) {
 
         MultipartFile inputFile = request.getFileInput();
         String originalFilename = inputFile.getOriginalFilename();
@@ -100,7 +100,7 @@ public class ConvertEmlToPDF {
             // Convert EML to PDF with enhanced options
             try {
                 byte[] pdfBytes =
-                        EmlToPdf.convertEmlToPdf(
+                        EmlToPdf.convertEmlToPdk(
                                 runtimePathConfig
                                         .getWeasyPrintPath(), // Use configured WeasyPrint path
                                 request,
