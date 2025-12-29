@@ -2,7 +2,7 @@ name: Scan project with Seqra
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "branch-v1.6.0" ]
   pull_request:
     branches: [ "main" ]
 
