@@ -12,9 +12,8 @@ jobs:
     steps:
       - name: Checkout your repository
         uses: actions/checkout@v4
-
-      - name: Run Seqra code analysis
-        uses: seqra/seqra-action@v2
+        
+      - name: Upload sarif to github code security
+        uses: github/codeql-action/upload-sarif@v4
         with:
-          upload-sarif: 'true'
-          artifact-name: 'seqra.sarif'
+          sarif_file: seqra.sarif
